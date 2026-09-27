@@ -486,7 +486,7 @@ function renderMembers() {
 
       <div class="toolbar no-print">
         <input class="search-input" type="search"
-          placeholder="Tìm tên, mã, CCCD, điện thoại, địa chỉ... (gõ không dấu được)"
+          placeholder="Tìm tên, CCCD, địa chỉ ..."
           value="${esc(memFilters.q)}" oninput="setMemberSearch(this.value)">
       </div>
 
