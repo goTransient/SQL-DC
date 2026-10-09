@@ -152,9 +152,11 @@ async function initializeApp() {
     CSRF_TOKEN = status.csrfToken;
     authenticatedUser = status.user;
     isAuthenticated = true;
-    document.querySelector(".app")?.classList.remove("auth-only");
     renderAccount();
     await loadData();
+    if (isAuthenticated) {
+      document.querySelector(".app")?.classList.remove("auth-only");
+    }
   } catch (error) {
     if (error.status === 401) {
       showLogin();

@@ -14,7 +14,7 @@ declare(strict_types=1);
   <script src="js/script.js" defer></script>
 </head>
 <body>
-  <div class="app">
+  <div class="app auth-only">
     <aside class="sidebar">
       <div class="brand">
         <h1>Sổ Quản Lý<br>Dân Cư</h1>
@@ -27,7 +27,15 @@ declare(strict_types=1);
       <div class="sidebar-foot save-indicator idle" id="save-indicator"></div>
     </aside>
 
-    <main id="main" tabindex="-1"></main>
+    <main id="main" tabindex="-1">
+      <section class="auth-page">
+        <div class="auth-card">
+          <h2>Sổ Quản Lý Dân Cư</h2>
+          <p>Đăng nhập bằng tài khoản Google đã được cấp quyền để tiếp tục.</p>
+          <a class="btn-primary auth-login" href="api/google-login.php">Đăng nhập bằng Google</a>
+        </div>
+      </section>
+    </main>
   </div>
 </body>
 </html>

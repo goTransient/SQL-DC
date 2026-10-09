@@ -452,7 +452,13 @@ try {
     check($status['status'] === 401 && responseJson($status)['ok'] === false, 'Unauthenticated session status was not a consistent 401.');
 
     $page = httpRequest($url . '/');
-    check($page['status'] === 200 && str_contains($page['body'], 'id="main"'), 'Application shell failed at a subdirectory base path.');
+    check(
+        $page['status'] === 200 &&
+        str_contains($page['body'], 'id="main"') &&
+        str_contains($page['body'], 'class="app auth-only"') &&
+        str_contains($page['body'], 'href="api/google-login.php"'),
+        'Initial login screen or application shell failed at a subdirectory base path.'
+    );
 
     $protectedActions = [
         ['data', 'GET'],
