@@ -21,9 +21,11 @@ declare(strict_types=1);
  */
 
 ini_set('display_errors', '0');
+header('Cache-Control: private, no-store');
+header('Pragma: no-cache');
 ob_start();
 
-require __DIR__ . '/db.php';
+require_once __DIR__ . '/db.php';
 
 /* Excel import: header text -> field. Defined here, before the dispatch below,
  * because a top-level const only exists once PHP has executed its line. */
@@ -54,11 +56,29 @@ const RESIDENT_COLUMNS = [
     'Cần kiểm tra'       => 'check_note'
 ];
 
-$action = $_GET['action'] ?? '';
-$isPost = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+final class ImportValidationException extends RuntimeException
+{
+}
 
 try {
-    if ($action !== 'data' && !$isPost) {
+    require_once __DIR__ . '/session.php';
+    requireAuth();
+
+    $action = $_GET['action'] ?? '';
+    if (!is_string($action) || $action === '') {
+        fail('Hành động không hợp lệ.', 400);
+    }
+
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    if ($method !== 'GET' && $method !== 'POST') {
+        header('Allow: GET, POST');
+        fail('Phương thức không được hỗ trợ.', 405);
+    }
+
+    if ($method === 'POST') {
+        requireCsrfProtection();
+    } elseif ($action !== 'data') {
+        header('Allow: POST');
         fail('Hãy gửi yêu cầu này bằng POST.', 405);
     }
 
@@ -79,7 +99,12 @@ try {
         default              => fail('Hành động không hợp lệ: ' . $action, 404)
     };
 } catch (Throwable $e) {
-    fail($e->getMessage(), 500);
+    logAuthDiagnostic(
+        $e instanceof PDOException
+            ? 'Database operation failed.'
+            : $e->getMessage()
+    );
+    fail('Lỗi máy chủ. Vui lòng thử lại sau.', 500);
 }
 
 /* ============================================================ */
@@ -90,6 +115,14 @@ try {
  */
 function upgradeSchema(PDO $db): void
 {
+    if (databaseDriver() === 'mysql') {
+        $column = $db->query("SHOW COLUMNS FROM activities LIKE 'end_date'")->fetch();
+        if (!$column) {
+            throw new RuntimeException('MySQL schema is missing activities.end_date.');
+        }
+        return;
+    }
+
     $columns = array_column($db->query('PRAGMA table_info(activities)')->fetchAll(), 'name');
 
     if (!in_array('end_date', $columns, true)) {
@@ -100,6 +133,7 @@ function upgradeSchema(PDO $db): void
 function getData(): never
 {
     $db = db();
+    $associationOrder = databaseDriver() === 'mysql' ? 'name' : 'name COLLATE NOCASE';
 
     ok([
         'households' => $db->query(
@@ -107,7 +141,7 @@ function getData(): never
         )->fetchAll(),
         'residents' => $db->query('SELECT * FROM residents ORDER BY code')->fetchAll(),
         'associations' => $db->query(
-            'SELECT association_id, name, note FROM associations ORDER BY name COLLATE NOCASE'
+            'SELECT association_id, name, note FROM associations ORDER BY ' . $associationOrder
         )->fetchAll(),
         'residentAssociations' => $db->query(
             'SELECT resident_id, association_id FROM resident_associations'
@@ -214,12 +248,17 @@ function saveResident(array $data): never
         if (isset($data['associationIds']) && is_array($data['associationIds'])) {
             $db->prepare('DELETE FROM resident_associations WHERE resident_id = ?')->execute([$id]);
             $insert = $db->prepare(
-                'INSERT OR IGNORE INTO resident_associations (resident_id, association_id)
-                 SELECT ?, association_id FROM associations WHERE association_id = ?'
+                'INSERT INTO resident_associations (resident_id, association_id)
+                 SELECT ?, a.association_id FROM associations AS a
+                 WHERE a.association_id = ?
+                   AND NOT EXISTS (
+                       SELECT 1 FROM resident_associations AS ra
+                       WHERE ra.resident_id = ? AND ra.association_id = a.association_id
+                   )'
             );
 
             foreach ($data['associationIds'] as $associationId) {
-                $insert->execute([$id, (int)$associationId]);
+                $insert->execute([$id, (int)$associationId, $id]);
             }
         }
 
@@ -302,18 +341,26 @@ function saveContribution(array $data): never
     mustExist($db, 'households', 'household_id', $householdId, 'Hộ gia đình không tồn tại.');
     mustExist($db, 'activities', 'activity_id', $activityId, 'Hoạt động không tồn tại.');
 
-    $db->prepare(
-        'INSERT INTO household_activities (household_id, activity_id, paid, amount, notes)
-         VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT (household_id, activity_id) DO UPDATE SET
-            paid = excluded.paid, amount = excluded.amount, notes = excluded.notes'
-    )->execute([
+    $values = [
         $householdId,
         $activityId,
         empty($data['paid']) ? 0 : 1,
         max(0, (int)($data['amount'] ?? 0)),
         text($data['notes'] ?? '')
-    ]);
+    ];
+    $isMysql = databaseDriver() === 'mysql';
+    $upsert = $isMysql
+        ? 'INSERT INTO household_activities (household_id, activity_id, paid, amount, notes)
+           VALUES (?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE paid = ?, amount = ?, notes = ?'
+        : 'INSERT INTO household_activities (household_id, activity_id, paid, amount, notes)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT (household_id, activity_id) DO UPDATE SET
+               paid = excluded.paid, amount = excluded.amount, notes = excluded.notes';
+    if ($isMysql) {
+        array_push($values, $values[2], $values[3], $values[4]);
+    }
+    $db->prepare($upsert)->execute($values);
 
     ok();
 }
@@ -335,7 +382,7 @@ function findSheet(array $sheets, string $name): array
         }
     }
 
-    throw new RuntimeException("Không tìm thấy sheet \"$name\". Hãy dùng đúng file mẫu.");
+    throw new ImportValidationException("Không tìm thấy sheet \"$name\". Hãy dùng đúng file mẫu.");
 }
 
 /* header text -> [field => column index] */
@@ -353,7 +400,7 @@ function mapColumns(array $headerRow, array $map, array $required, string $sheet
 
     foreach ($required as $field) {
         if (!isset($cols[$field])) {
-            throw new RuntimeException(
+            throw new ImportValidationException(
                 "Sheet \"$sheet\" thiếu cột \"" . array_search($field, $map, true) . '".'
             );
         }
@@ -404,7 +451,9 @@ function importExcel(): never
         $db->exec('DELETE FROM household_activities');
         $db->exec('DELETE FROM residents');
         $db->exec('DELETE FROM households');
-        $db->exec("DELETE FROM sqlite_sequence WHERE name IN ('residents', 'households')");
+        if (databaseDriver() === 'sqlite') {
+            $db->exec("DELETE FROM sqlite_sequence WHERE name IN ('residents', 'households')");
+        }
 
         /* Households */
         $householdIds = [];
@@ -420,8 +469,14 @@ function importExcel(): never
                 continue;
             }
 
+            if (strlen($code) > MAX_CODE_LENGTH) {
+                throw new ImportValidationException(
+                    'Sheet "Hộ gia đình", dòng ' . ($i + 1) . ': mã hộ vượt quá ' . MAX_CODE_LENGTH . ' byte.'
+                );
+            }
+
             if (isset($householdIds[$code])) {
-                throw new RuntimeException('Sheet "Hộ gia đình", dòng ' . ($i + 1) . ": mã hộ $code bị trùng.");
+                throw new ImportValidationException('Sheet "Hộ gia đình", dòng ' . ($i + 1) . ": mã hộ $code bị trùng.");
             }
 
             $group = $v['group_number'] ?? '';
@@ -449,7 +504,7 @@ function importExcel(): never
             $hhCode = $v['household_code'] ?? '';
 
             if (!isset($householdIds[$hhCode])) {
-                throw new RuntimeException(
+                throw new ImportValidationException(
                     'Sheet "Cư dân", dòng ' . ($i + 1) . " ({$v['full_name']}): mã hộ \"$hhCode\" không có trong sheet \"Hộ gia đình\"."
                 );
             }
@@ -457,6 +512,12 @@ function importExcel(): never
             $v['household_id'] = $householdIds[$hhCode];
             $resident = cleanResident($v);
             $code = $v['code'] ?? '';
+
+            if ($code !== '' && strlen($code) > MAX_CODE_LENGTH) {
+                throw new ImportValidationException(
+                    'Sheet "Cư dân", dòng ' . ($i + 1) . ': mã cư dân vượt quá ' . MAX_CODE_LENGTH . ' byte.'
+                );
+            }
 
             if ($code === '' || isset($usedCodes[$code])) {
                 $withoutCode[] = $resident;
@@ -478,7 +539,16 @@ function importExcel(): never
             $db->rollBack();
         }
 
-        fail('Chưa nhập được, dữ liệu cũ được giữ nguyên. ' . $e->getMessage());
+        if ($e instanceof ImportValidationException) {
+            fail('Chưa nhập được, dữ liệu cũ được giữ nguyên. ' . $e->getMessage(), 400);
+        }
+
+        logAuthDiagnostic(
+            $e instanceof PDOException
+                ? 'Excel import failed due to a database error.'
+                : 'Excel import failed: ' . $e->getMessage()
+        );
+        fail('Chưa nhập được. Dữ liệu cũ được giữ nguyên. Vui lòng kiểm tra file hoặc liên hệ quản trị viên.', 500);
     }
 
     ok([

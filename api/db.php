@@ -3,11 +3,12 @@ declare(strict_types=1);
 
 /*
  * DOMIVA - database + shared helpers.
- * The database file and its tables are created automatically on first use.
+ * SQLite files and tables initialize on first use; MySQL schema is managed separately.
  */
 
 const DATA_DIR = __DIR__ . '/../data';
 const DB_FILE  = DATA_DIR . '/dancu.db';
+const MAX_CODE_LENGTH = 64;
 
 const STATUSES  = ['Đang ở', 'Tạm vắng', 'Đã chuyển đi', 'Đã mất'];
 const RELATIONS = ['', 'Chủ hộ', 'Vợ / Chồng', 'Con', 'Cha / Mẹ', 'Ông / Bà', 'Cháu', 'Khác'];
@@ -67,6 +68,13 @@ function schema(): array
             amount       INTEGER NOT NULL DEFAULT 0,
             notes        TEXT NOT NULL DEFAULT '',
             PRIMARY KEY (household_id, activity_id)
+        )",
+        "CREATE TABLE IF NOT EXISTS auth_users (
+            user_id    INTEGER PRIMARY KEY AUTOINCREMENT,
+            email      TEXT NOT NULL COLLATE NOCASE UNIQUE,
+            active     INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            last_login TEXT
         )"
     ];
 }
@@ -76,6 +84,31 @@ function db(): PDO
     static $pdo = null;
 
     if ($pdo instanceof PDO) {
+        return $pdo;
+    }
+
+    require_once __DIR__ . '/auth-config.php';
+    $driver = databaseDriver();
+
+    if ($driver === 'mysql') {
+        $config = mysqlDatabaseConfig();
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
+            $config['host'],
+            $config['port'],
+            $config['name']
+        );
+
+        try {
+            $pdo = new PDO($dsn, $config['user'], $config['password'], [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false
+            ]);
+        } catch (PDOException) {
+            throw new RuntimeException('Unable to connect to the configured MySQL database.');
+        }
+
         return $pdo;
     }
 
@@ -93,6 +126,64 @@ function db(): PDO
     }
 
     return $pdo;
+}
+
+function databaseDriver(): string
+{
+    require_once __DIR__ . '/auth-config.php';
+    $devMode = getenv('DEV_MODE');
+
+    if ($devMode === false) {
+        $devMode = 'true';
+    }
+
+    $devMode = strtolower(trim($devMode));
+    if (!in_array($devMode, ['true', 'false'], true)) {
+        throw new RuntimeException('DEV_MODE must be either true or false.');
+    }
+
+    return $devMode === 'true' ? 'sqlite' : 'mysql';
+}
+
+function mysqlDatabaseConfig(): array
+{
+    $required = ['SQLDC_DB_HOST', 'SQLDC_DB_NAME', 'SQLDC_DB_USER', 'SQLDC_DB_PASSWORD'];
+    $values = [];
+
+    foreach ($required as $name) {
+        $value = getenv($name);
+        if ($value === false || trim($value) === '') {
+            throw new RuntimeException("Missing required database environment variable: $name");
+        }
+        $values[$name] = $value;
+    }
+
+    $host = trim($values['SQLDC_DB_HOST']);
+    $name = trim($values['SQLDC_DB_NAME']);
+    if (
+        preg_match('/[;\x00-\x20]/', $host) ||
+        preg_match('/^[A-Za-z0-9_$-]+$/', $name) !== 1
+    ) {
+        throw new RuntimeException('MySQL host or database name contains invalid characters.');
+    }
+
+    $portValue = getenv('SQLDC_DB_PORT');
+    $port = $portValue === false || trim($portValue) === '' ? 3306 : filter_var(
+        trim($portValue),
+        FILTER_VALIDATE_INT,
+        ['options' => ['min_range' => 1, 'max_range' => 65535]]
+    );
+    if ($port === false) {
+        throw new RuntimeException('SQLDC_DB_PORT must be an integer from 1 to 65535.');
+    }
+
+    return [
+        'host' => $host,
+        'port' => $port,
+        'name' => $name,
+        'user' => $values['SQLDC_DB_USER'],
+        'password' => $values['SQLDC_DB_PASSWORD']
+    ];
 }
 
 /* ---------- JSON responses ---------- */
@@ -211,15 +302,27 @@ function cleanResident(array $d): array
 /* Next code such as H161 or CD0678 */
 function nextCode(PDO $db, string $table, string $prefix, int $pad): string
 {
+    if (!in_array($table, ['households', 'residents'], true)) {
+        throw new InvalidArgumentException('Unsupported code table.');
+    }
+
     $start = strlen($prefix) + 1;
+    $isMysql = databaseDriver() === 'mysql';
+    $castType = $isMysql ? 'UNSIGNED' : 'INTEGER';
+    $substring = $isMysql ? 'SUBSTRING' : 'SUBSTR';
 
     $stmt = $db->prepare(
-        "SELECT COALESCE(MAX(CAST(SUBSTR(code, $start) AS INTEGER)), 0)
+        "SELECT COALESCE(MAX(CAST($substring(code, $start) AS $castType)), 0)
          FROM $table WHERE code LIKE ?"
     );
     $stmt->execute([$prefix . '%']);
 
-    return $prefix . str_pad((string)((int)$stmt->fetchColumn() + 1), $pad, '0', STR_PAD_LEFT);
+    $code = $prefix . str_pad((string)((int)$stmt->fetchColumn() + 1), $pad, '0', STR_PAD_LEFT);
+    if (strlen($code) > MAX_CODE_LENGTH) {
+        throw new RuntimeException('Generated record code exceeds the supported maximum length.');
+    }
+
+    return $code;
 }
 
 /* Throws a user-facing error if the row does not exist. */

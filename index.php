@@ -23,10 +23,11 @@ declare(strict_types=1);
 
       <nav id="nav"></nav>
 
+      <div class="sidebar-account" id="account-area" hidden></div>
       <div class="sidebar-foot save-indicator idle" id="save-indicator"></div>
     </aside>
 
-    <main id="main"></main>
+    <main id="main" tabindex="-1"></main>
   </div>
 </body>
 </html>

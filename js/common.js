@@ -5,6 +5,15 @@
  * ============================================================ */
 
 const API_URL = "api/api.php";
+let CSRF_TOKEN = "";
+
+class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
 
 const RELATION_OPTIONS = ["Chủ hộ", "Vợ / Chồng", "Con", "Cha / Mẹ", "Ông / Bà", "Cháu", "Khác"];
 const STATUS_OPTIONS = ["Đang ở", "Tạm vắng", "Đã chuyển đi", "Đã mất"];
@@ -26,28 +35,54 @@ const ageGroupColors = {
  * call("resident.save", {...})      -> POST JSON
  * call("import", formData)          -> POST multipart
  */
-async function call(action, payload) {
-  const isForm = payload instanceof FormData;
-  const opts = payload === undefined ? {} : {
-    method: "POST",
-    body: isForm ? payload : JSON.stringify(payload),
-    headers: isForm ? {} : { "Content-Type": "application/json" }
-  };
-
-  const response = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`, opts);
+async function requestJson(url, options = {}) {
+  const response = await fetch(url, { credentials: "same-origin", ...options });
   const raw = await response.text();
   let data;
 
   try {
     data = JSON.parse(raw);
   } catch {
-    // A PHP fatal error arrives as HTML: show its text instead of failing silently.
-    const snippet = raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 300);
-    throw new Error("Máy chủ không trả về JSON: " + (snippet || `HTTP ${response.status}`));
+    throw new ApiError(`Máy chủ không trả về JSON (HTTP ${response.status}).`, response.status);
   }
 
-  if (!data.ok) throw new Error(data.error || `HTTP ${response.status}`);
+  if (!response.ok || !data.ok) {
+    const error = new ApiError(data.error || `HTTP ${response.status}`, response.status);
+    if (response.status === 401) {
+      document.dispatchEvent(new CustomEvent("sql-dc:unauthorized"));
+    }
+    throw error;
+  }
+
   return data;
+}
+
+async function call(action, payload) {
+  const isForm = payload instanceof FormData;
+  const opts = { method: payload === undefined ? "GET" : "POST", headers: {} };
+
+  if (payload !== undefined) {
+    if (!CSRF_TOKEN) {
+      throw new ApiError("Phiên bảo mật chưa sẵn sàng. Hãy tải lại trang.", 401);
+    }
+    opts.headers["X-CSRF-Token"] = CSRF_TOKEN;
+    if (isForm) {
+      opts.body = payload;
+    } else {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(payload);
+    }
+  }
+
+  return requestJson(`${API_URL}?action=${encodeURIComponent(action)}`, opts);
+}
+
+async function logoutRequest() {
+  if (!CSRF_TOKEN) throw new ApiError("Phiên bảo mật đã hết hạn.", 401);
+  return requestJson("api/google-logout.php", {
+    method: "POST",
+    headers: { "X-CSRF-Token": CSRF_TOKEN }
+  });
 }
 
 /*
@@ -65,7 +100,7 @@ async function saveAndRefresh(action, payload) {
     return true;
   } catch (error) {
     setSaved();
-    alert(error.message);
+    if (error.status !== 401) alert(error.message);
     return false;
   }
 }
