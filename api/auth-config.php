@@ -10,6 +10,7 @@ function loadLocalAuthEnv(): void
         dirname($projectRoot) . DIRECTORY_SEPARATOR . '.env',
         $projectRoot . DIRECTORY_SEPARATOR . '.env'
     ];
+
     $path = null;
     foreach ($paths as $candidate) {
         if (is_file($candidate)) {
@@ -17,14 +18,11 @@ function loadLocalAuthEnv(): void
             break;
         }
     }
-
-    if ($path === null) {
-        return;
-    }
+    if ($path === null) return;
 
     $lines = file($path, FILE_IGNORE_NEW_LINES);
     if ($lines === false) {
-        throw new RuntimeException('Unable to read local authentication configuration.');
+        throw new RuntimeException('Unable to read authentication configuration.');
     }
 
     $allowedNames = [
@@ -42,17 +40,13 @@ function loadLocalAuthEnv(): void
 
     foreach ($lines as $line) {
         $line = trim($line);
-        if ($line === '' || str_starts_with($line, '#')) {
-            continue;
-        }
-
-        if (!preg_match('/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/', $line, $matches)) {
-            continue;
-        }
+        if ($line === '' || str_starts_with($line, '#')) continue;
+        if (!preg_match('/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/', $line, $matches)) continue;
 
         $name = $matches[1];
+        $value = trim($matches[2]);
         if (in_array($name, $allowedNames, true) && getenv($name) === false) {
-            putenv($name . '=' . trim($matches[2]));
+            putenv("$name=$value");
         }
     }
 }
@@ -62,20 +56,16 @@ loadLocalAuthEnv();
 function requiredAuthEnv(string $name): string
 {
     $value = getenv($name);
-
     if ($value === false || trim($value) === '') {
         throw new RuntimeException("Missing required environment variable: $name");
     }
-
     return trim($value);
 }
 
 function sessionConfig(): array
 {
     static $config = null;
-    if ($config !== null) {
-        return $config;
-    }
+    if ($config !== null) return $config;
 
     $baseUrl = rtrim(requiredAuthEnv('SQLDC_BASE_URL'), '/');
     $base = parse_url($baseUrl);
@@ -84,8 +74,7 @@ function sessionConfig(): array
         $base === false ||
         empty($base['scheme']) ||
         empty($base['host']) ||
-        isset($base['user']) ||
-        isset($base['pass']) ||
+        isset($base['user'], $base['pass']) ||
         isset($base['query']) ||
         isset($base['fragment'])
     ) {
@@ -105,7 +94,7 @@ function sessionConfig(): array
     if (
         $basePath !== '' &&
         (!preg_match('#^/(?:[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*)?$#', $basePath)
-            || preg_match('~(?:^|/)\.{1,2}(?:/|$)~', $basePath))
+            || preg_match('#(?:^|/)\.{1,2}(?:/|$)#', $basePath))
     ) {
         throw new RuntimeException('SQLDC_BASE_URL contains an invalid application path.');
     }
@@ -123,10 +112,7 @@ function sessionConfig(): array
 function authConfig(): array
 {
     static $config = null;
-
-    if ($config !== null) {
-        return $config;
-    }
+    if ($config !== null) return $config;
 
     $sessionConfig = sessionConfig();
     $baseUrl = $sessionConfig['base_url'];
@@ -135,6 +121,7 @@ function authConfig(): array
     $host = strtolower($base['host']);
     $basePath = $base['path'] ?? '';
     $expectedCallbackPath = rtrim($basePath, '/') . '/api/google-callback.php';
+
     $redirectUri = requiredAuthEnv('SQLDC_GOOGLE_REDIRECT_URI');
     $redirect = parse_url($redirectUri);
 
