@@ -105,7 +105,8 @@ function db(): PDO
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false
             ]);
-        } catch (PDOException) {
+        } catch (PDOException $e) {
+            error_log('[SQL-DC MySQL] ' . $e->getCode() . ': ' . $e->getMessage());
             throw new RuntimeException('Unable to connect to the configured MySQL database.');
         }
 
