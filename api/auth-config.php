@@ -5,8 +5,20 @@ require_once __DIR__ . '/db.php';
 
 function loadLocalAuthEnv(): void
 {
-    $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env';
-    if (!is_file($path)) {
+    $projectRoot = dirname(__DIR__);
+    $paths = [
+        dirname($projectRoot) . DIRECTORY_SEPARATOR . '.env',
+        $projectRoot . DIRECTORY_SEPARATOR . '.env'
+    ];
+    $path = null;
+    foreach ($paths as $candidate) {
+        if (is_file($candidate)) {
+            $path = $candidate;
+            break;
+        }
+    }
+
+    if ($path === null) {
         return;
     }
 

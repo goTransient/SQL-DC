@@ -18,9 +18,11 @@ behavior remains in that endpoint and its existing SQLite schema.
 ## Google OAuth configuration
 
 Set these environment variables in the PHP/web-server process environment or
-in the optional project-root `.env` file. Existing process environment values
-take precedence. SQL-DC loads only the documented OAuth and database settings
-from `.env`.
+in an optional `.env` file. SQL-DC checks the directory one level above the
+project root first (for example, `/home/ACCOUNT/.env` beside `/home/ACCOUNT/www`),
+then the project root. If both files exist, only the parent-directory file is
+loaded. Existing process environment values take precedence. SQL-DC loads only
+the documented OAuth and database settings from `.env`.
 
 | Variable | Purpose |
 | --- | --- |
