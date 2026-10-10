@@ -1190,6 +1190,10 @@ button.year-tile:hover {
   margin-bottom: 12px;
 }
 
+#member-rows .ukit-table-page-size label {
+  white-space: nowrap;
+}
+
 #member-notice .import-notice {
   margin-bottom: 12px;
 }
