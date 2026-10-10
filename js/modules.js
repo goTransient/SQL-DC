@@ -564,7 +564,7 @@ function updateMemberResults() {
         { key: "household", label: "Hộ gia đình", render: (value, row) => householdAddress(row.resident.household_id) },
         { key: "relation", label: "Quan hệ", render: (value, row) => row.resident.relation },
         { key: "phone", label: "Điện thoại", render: (value, row) => row.resident.phone },
-        { key: "actions", label: "", render: (value, row) => {
+        { key: "actions", label: "-", render: (value, row) => {
           const button = UIKit.createButton({
             text: "Sửa",
             variant: "outline",
