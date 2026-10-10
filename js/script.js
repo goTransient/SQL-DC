@@ -121,9 +121,10 @@ function renderAccount() {
       <span class="account-name">${esc(authenticatedUser.name || authenticatedUser.email)}</span>
       <span class="account-email">${esc(authenticatedUser.email)}</span>
     </div>
-    <button type="button" class="account-logout" onclick="logout()">Đăng xuất</button>
+    
   ` : "";
 }
+{/* <button type="button" class="account-logout" onclick="logout()">Đăng xuất</button> */}
 
 function showLogin(message = "") {
   closeFormModal();
@@ -157,14 +158,14 @@ function showLogin(message = "") {
   }
 }
 
-async function logout() {
-  try {
-    await logoutRequest();
-    showLogin("Bạn đã đăng xuất.");
-  } catch (error) {
-    if (error.status !== 401) alert(error.message);
-  }
-}
+// async function logout() {
+//   try {
+//     await logoutRequest();
+//     showLogin("Bạn đã đăng xuất.");
+//   } catch (error) {
+//     if (error.status !== 401) alert(error.message);
+//   }
+// }
 
 async function initializeApp() {
   if (appInitialized) return;
