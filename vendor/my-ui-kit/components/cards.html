@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="page.title.cards">Cards — My UI Kit</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+</head>
+<body>
+  <div class="ui-main-shell" style="margin-left:0">
+    <header class="ui-topbar">
+      <a class="ui-button ui-button-outline ui-button-sm" href="../index.html" data-i18n="back.library">← Thư viện</a>
+      <strong class="ui-topbar-title">Cards</strong>
+    </header>
+    <main class="ui-content">
+      <div class="ui-page-heading">
+        <div>
+          <div class="ui-breadcrumb" data-i18n="breadcrumb.cards">Thành phần / Cards</div>
+          <h1>Cards</h1>
+          <p class="ui-muted" data-i18n="page.cards.description">Các mẫu thẻ nội dung và thống kê.</p>
+        </div>
+      </div>
+      <section class="ui-stat-grid">
+        <article class="ui-stat-card">
+          <div class="ui-stat-icon">▤</div>
+          <div>
+            <span data-i18n="page.cards.totalExams">Tổng bài thi</span>
+            <strong>128</strong>
+            <small data-i18n="page.cards.allCourses">Trong tất cả học phần</small>
+          </div>
+        </article>
+        <article class="ui-stat-card">
+          <div class="ui-stat-icon amber">◷</div>
+          <div>
+            <span data-i18n="page.cards.inProgress">Đang diễn ra</span>
+            <strong>08</strong>
+            <small data-i18n="page.cards.monitor">Cần theo dõi</small>
+          </div>
+        </article>
+        <article class="ui-stat-card">
+          <div class="ui-stat-icon green">✓</div>
+          <div>
+            <span data-i18n="page.cards.completed">Hoàn thành</span>
+            <strong>94</strong>
+            <small data-i18n="page.cards.thisMonth">Trong tháng này</small>
+          </div>
+        </article>
+      </section>
+      <section class="ui-panel ui-mt-24">
+        <header class="ui-panel-header">
+          <div>
+            <h2 data-i18n="page.cards.contentCards">Thẻ nội dung</h2>
+            <p data-i18n="page.cards.contentDescription">Tiêu đề, mô tả và vùng nội dung.</p>
+          </div>
+          <button class="ui-button ui-button-outline ui-button-sm" type="button" data-i18n="page.cards.options">Tùy chọn</button>
+        </header>
+        <div class="ui-panel-body">
+          <h3 data-i18n="page.cards.courseInfo">Thông tin học phần</h3>
+          <p class="ui-muted" data-i18n="page.cards.contentHelp">Đây là vùng nội dung của card. Có thể đặt biểu mẫu, bảng hoặc các thành phần khác tại đây.</p>
+          <span class="ui-badge ui-badge-info">Đang hoạt động</span>
+        </div>
+      </section>
+      <section class="ui-panel ui-mt-24">
+        <header class="ui-panel-header">
+          <div>
+            <h2 data-i18n="page.cards.generated">Thẻ tạo bằng UIKit</h2>
+            <p data-i18n="page.cards.generatedDescription">Ví dụ tạo card bằng JavaScript.</p>
+          </div>
+          <a class="ui-button ui-button-outline ui-button-sm" href="api-demo.html"><span data-i18n="page.cards.viewApi">Xem API</span> →</a>
+        </header>
+        <div class="ui-panel-body">
+          <div id="factoryCard"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="../js/i18n.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/uikit.js"></script>
+  <script>
+    document.querySelector('#factoryCard').append(UIKit.createCard({
+      title: 'Card được tạo bằng JavaScript',
+      content: 'UIKit.createCard({ title, content })'
+    }));
+  </script>
+</body>
+</html>

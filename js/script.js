@@ -23,7 +23,7 @@ let appInitialized = false;
  * for pages that fill part of themselves afterwards.
  */
 const TABS = [
-  { id: "dashboard",    label: "Tổng quan",       ico: "■", render: renderDashboard },
+  { id: "dashboard",    label: "Tổng quan",       ico: "■", render: renderDashboard, afterRender: renderDashboardStats },
   { id: "members",      label: "Cư dân",          ico: "☻", render: renderMembers, afterRender: updateMemberResults },
   { id: "associations", label: "Hội, đoàn thể",   ico: "⚑", render: renderAssociations },
   { id: "activities",   label: "Hoạt động chung", ico: "●", render: renderActivities },
@@ -42,13 +42,34 @@ function renderSidebar() {
   const sub = document.getElementById("brand-sub");
   if (sub) sub.textContent = `${DB.households.length} hộ · ${living} nhân khẩu`;
 
+  const communityName = document.getElementById("community-name");
+  if (communityName) communityName.textContent = COMMUNITY_NAME;
+  const sidebarCommunityName = document.getElementById("community-sidebar-name");
+  if (sidebarCommunityName) sidebarCommunityName.textContent = COMMUNITY_NAME;
+  const dataDate = document.getElementById("data-date");
+  if (dataDate) dataDate.textContent = new Date().toLocaleDateString("vi-VN");
+
   renderAccount();
-  document.getElementById("nav").innerHTML = TABS.map(t => `
-    <button class="nav-item ${currentTab === t.id ? "active" : ""}" onclick="setTab('${t.id}')">
-      <span class="nav-ico">${t.ico}</span>
-      <span>${esc(t.label)}</span>
+  const nav = document.getElementById("nav");
+  nav.innerHTML = `
+    <div class="nav-group">
+      <div class="nav-group-label">TỔNG QUAN</div>
+      ${renderNavItem(TABS[0])}
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">QUẢN LÝ</div>
+      ${TABS.slice(1).map(renderNavItem).join("")}
+    </div>
+  `;
+}
+
+function renderNavItem(tab) {
+  return `
+    <button class="nav-item ${currentTab === tab.id ? "active" : ""}" onclick="setTab('${tab.id}')">
+      <span class="nav-ico" aria-hidden="true">${tab.ico}</span>
+      <span>${esc(tab.label)}</span>
     </button>
-  `).join("");
+  `;
 }
 
 function render() {
@@ -96,8 +117,10 @@ function renderAccount() {
 
   account.hidden = !authenticatedUser;
   account.innerHTML = authenticatedUser ? `
-    <span class="account-name">${esc(authenticatedUser.name || authenticatedUser.email)}</span>
-    <span class="account-email">${esc(authenticatedUser.email)}</span>
+    <div class="account-details">
+      <span class="account-name">${esc(authenticatedUser.name || authenticatedUser.email)}</span>
+      <span class="account-email">${esc(authenticatedUser.email)}</span>
+    </div>
     <button type="button" class="account-logout" onclick="logout()">Đăng xuất</button>
   ` : "";
 }

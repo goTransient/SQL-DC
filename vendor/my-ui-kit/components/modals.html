@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="page.title.feedback">Modal & alerts — My UI Kit</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/uikit.css">
+</head>
+<body>
+  <div class="ui-main-shell" style="margin-left:0">
+    <header class="ui-topbar">
+      <a class="ui-button ui-button-outline ui-button-sm" href="../index.html" data-i18n="back.library">← Thư viện</a>
+      <strong class="ui-topbar-title">Modal & alerts</strong>
+    </header>
+    <main class="ui-content">
+      <div class="ui-page-heading">
+        <div>
+          <div class="ui-breadcrumb" data-i18n="breadcrumb.feedback">Thành phần / Feedback</div>
+          <h1>Modal & alerts</h1>
+          <p class="ui-muted" data-i18n="page.feedback.title">Thông báo trạng thái và hộp thoại xác nhận.</p>
+        </div>
+      </div>
+      <section class="ui-panel">
+        <header class="ui-panel-header">
+          <h2 data-i18n="page.feedback.alertVariants">Alert variants</h2>
+        </header>
+        <div class="ui-panel-body" style="display:grid;gap:12px">
+          <div class="ui-alert ui-alert-success" role="status">
+            <span aria-hidden="true">✓</span>
+            <div><strong data-i18n="page.feedback.success">Thành công</strong><span data-i18n="page.feedback.successMessage">Thông tin đã được lưu.</span></div>
+          </div>
+          <div class="ui-alert ui-alert-warning" role="status">
+            <span aria-hidden="true">!</span>
+            <div><strong data-i18n="page.feedback.warning">Lưu ý</strong><span data-i18n="page.feedback.warningMessage">Vui lòng kiểm tra lại dữ liệu trước khi tiếp tục.</span></div>
+          </div>
+          <div class="ui-alert ui-alert-danger" role="alert">
+            <span aria-hidden="true">×</span>
+            <div><strong data-i18n="page.feedback.error">Có lỗi</strong><span data-i18n="page.feedback.errorMessage">Không thể thực hiện thao tác này.</span></div>
+          </div>
+          <div class="ui-alert ui-alert-info" role="status">
+            <span aria-hidden="true">i</span>
+            <div><strong data-i18n="page.feedback.info">Thông tin</strong><span data-i18n="page.feedback.infoMessage">Đây là nội dung hướng dẫn bổ sung.</span></div>
+          </div>
+        </div>
+      </section>
+      <section class="ui-panel ui-mt-24">
+        <header class="ui-panel-header">
+          <h2 data-i18n="page.feedback.sampleModal">Modal mẫu</h2>
+        </header>
+        <div class="ui-panel-body">
+          <button class="ui-button ui-button-primary" type="button" id="openReferenceModal" data-i18n="page.feedback.openModal">Mở modal mẫu</button>
+          <button class="ui-button ui-button-outline" type="button" id="openFactoryModal" style="margin-left:8px" data-i18n="page.feedback.openUIKitModal">Mở modal UIKit</button>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="ui-modal-backdrop" id="componentModal" hidden>
+    <section class="ui-modal" role="dialog" aria-modal="true" aria-labelledby="componentModalTitle" aria-describedby="componentModalDescription">
+      <header class="ui-modal-header">
+        <h2 id="componentModalTitle" data-i18n="page.feedback.confirmTitle">Xác nhận thao tác</h2>
+        <button class="ui-icon-button" type="button" data-modal-close aria-label="Đóng" data-i18n-aria-label="button.close">×</button>
+      </header>
+      <div class="ui-modal-body" id="componentModalDescription">Bạn có chắc chắn muốn thực hiện thao tác này? Đây là nội dung minh họa.</div>
+      <footer class="ui-modal-footer">
+        <button class="ui-button ui-button-outline" type="button" data-modal-close data-i18n="button.cancel">Hủy</button>
+        <button class="ui-button ui-button-danger" type="button" data-modal-close data-i18n="button.confirm">Xác nhận</button>
+      </footer>
+    </section>
+  </div>
+  <script src="../js/i18n.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/uikit.js"></script>
+  <script>
+    document.querySelector('#openReferenceModal').addEventListener('click', () => {
+      document.querySelector('#componentModal').hidden = false;
+    });
+
+    const factoryModal = UIKit.createModal({
+      title: UI18n.t('page.feedback.confirmTitle'),
+      titleKey: 'page.feedback.confirmTitle',
+      message: 'Đây là modal do UIKit tạo ra.',
+      confirmText: UI18n.t('button.confirm'),
+      confirmTextKey: 'button.confirm',
+      cancelText: UI18n.t('button.cancel'),
+      cancelTextKey: 'button.cancel',
+      onConfirm: () => alert('Đã xác nhận')
+    });
+    document.body.append(factoryModal.element);
+    document.querySelector('#openFactoryModal').addEventListener('click', factoryModal.open);
+  </script>
+</body>
+</html>

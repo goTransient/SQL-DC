@@ -61,7 +61,7 @@ function renderDashboard() {
 
   return `
     <section class="page dash">
-      ${dashHero(living)}
+      <div class="hero-stats" id="dashboard-stats" aria-label="Chỉ số dân cư"></div>
 
       <div class="dash-row dash-row-wide">
         ${dashPyramid(living)}
@@ -84,35 +84,58 @@ function renderDashboard() {
   `;
 }
 
-/* ---------- Hero: the tổ in four numbers ---------- */
+function renderDashboardStats() {
+  const container = document.getElementById("dashboard-stats");
+  if (!container) return;
 
-function dashHero(living) {
+  const living = DB.residents.filter(isLiving);
   const households = DB.households.filter(h => membersOf(h.household_id).some(isLiving)).length;
   const voters = living.filter(r => Number(r.is_voter)).length;
-  const ages = living.map(ageOf).filter(a => a !== null);
-  const avgAge = ages.length ? Math.round(ages.reduce((s, a) => s + a, 0) / ages.length) : "—";
-  const today = new Date().toLocaleDateString("vi-VN");
+  const ages = living.map(ageOf).filter(age => age !== null);
+  const averageAge = ages.length ? Math.round(ages.reduce((sum, age) => sum + age, 0) / ages.length) : "—";
+  const stats = [
+    { label: "nhân khẩu", value: living.length, icon: "▦", tone: "blue" },
+    {
+      label: "hộ gia đình",
+      value: households,
+      note: households ? `${decimal(living.length / households)} người mỗi hộ` : "",
+      icon: "⌂",
+      tone: "amber"
+    },
+    { label: "cử tri", value: voters, note: `${pct(voters, living.length)}% dân số`, icon: "✓", tone: "green" },
+    { label: "tuổi trung bình", value: averageAge, icon: "◷", tone: "blue" }
+  ];
 
-  const big = (value, label, note = "") => `
-    <div class="hero-stat">
-      <strong>${value}</strong>
-      <span>${esc(label)}</span>
-      ${note ? `<small>${esc(note)}</small>` : ""}
-    </div>`;
+  container.replaceChildren(...stats.map(({ label, value, note, icon, tone }) => {
+    const content = document.createElement("div");
+    content.className = "dashboard-stat-content";
+    const iconBadge = document.createElement("span");
+    iconBadge.className = `dashboard-stat-icon ${tone}`;
+    iconBadge.setAttribute("aria-hidden", "true");
+    iconBadge.textContent = icon;
 
-  return `
-    <div class="dash-hero">
-      <div class="hero-title">
-        <h2>${esc(COMMUNITY_NAME)}</h2>
-        <p>Số liệu ngày ${today}, chỉ tính người đang ở</p>
-      </div>
-      <div class="hero-stats">
-        ${big(living.length, "nhân khẩu")}
-        ${big(households, "hộ gia đình", households ? `${decimal(living.length / households)} người mỗi hộ` : "")}
-        ${big(voters, "cử tri", `${pct(voters, living.length)}% dân số`)}
-        ${big(avgAge, "tuổi trung bình")}
-      </div>
-    </div>`;
+    const details = document.createElement("div");
+    details.className = "dashboard-stat-details";
+    const caption = document.createElement("span");
+    caption.className = "dashboard-stat-label";
+    caption.textContent = label;
+    const number = document.createElement("strong");
+    number.className = "dashboard-stat-value";
+    number.textContent = value;
+    details.append(caption, number);
+
+    if (note) {
+      const detail = document.createElement("small");
+      detail.className = "dashboard-stat-note";
+      detail.textContent = note;
+      details.append(detail);
+    }
+    content.append(iconBadge, details);
+
+    const card = UIKit.createCard({ content });
+    card.classList.add("dashboard-stat-card");
+    return card;
+  }));
 }
 
 /* ---------- Population pyramid ---------- */
@@ -388,7 +411,6 @@ const LONGEVITY_AGES = [70, 80, 90, 100];
 const PRESETS = [
   { id: "all",      label: "Tất cả",                      f: {} },
   { id: "mamnon",   label: "Mầm non (dưới 6)",            f: { ageMax: 5 } },
-  { id: "treem",    label: "Trẻ em (dưới 16)",            f: { ageMax: 15 } },
   { id: "hocsinh",  label: "Học sinh (6–17)",             f: { ageMin: 6, ageMax: 17 } },
   { id: "sinhvien", label: "Sinh viên (18–22)",           f: { ageMin: 18, ageMax: 22 } },
   { id: "phunu",    label: "Phụ nữ 22–35",                f: { gender: "Nữ", ageMin: 22, ageMax: 35 } },
@@ -411,6 +433,7 @@ function emptyMemberFilters() {
 let memPreset = "all";
 let memFilters = emptyMemberFilters();
 let memSortByAge = false;
+let memberTable = null;
 
 function residentMatches(r, f, ignoreGender = false) {
   if (f.status && r.status !== f.status) return false;
@@ -527,47 +550,103 @@ function updateMemberResults() {
   }
   document.getElementById("member-notice").innerHTML = notice;
 
-  document.getElementById("member-rows").innerHTML = `
-    <div class="table-wrap">
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th>#</th><th>Họ và tên</th><th>Giới tính</th><th>Ngày sinh</th><th>Tuổi</th>
-            <th>Hộ gia đình</th><th>Quan hệ</th><th>Điện thoại</th><th class="no-print"></th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.length ? rows.map((r, i) => {
-            const age = ageOf(r);
-            return `
-              <tr>
-                <td>${i + 1}</td>
-                <td>
-                  <strong>${esc(r.full_name)}</strong>
-                  ${Number(r.is_voter) ? `<span class="badge">Cử tri</span>` : ""}
-                  ${isLiving(r) ? "" : `<span class="badge">${esc(r.status)}</span>`}
-                  ${r.check_note ? `<button type="button" class="badge badge-check no-print" onclick="openCheckModal(${r.resident_id})">Cần kiểm tra (${checkItems(r).length})</button>` : ""}
-                  ${r.check_note && memFilters.check ? checkSummary(r) : ""}
-                </td>
-                <td>${esc(r.gender)}</td>
-                <td>${esc(dobText(r))}</td>
-                <td><span class="age-badge ${ageGroupColors[ageGroupOf(r)] || ""}">${age ?? "—"}</span></td>
-                <td>${esc(householdAddress(r.household_id))}</td>
-                <td>${esc(r.relation)}</td>
-                <td>${esc(r.phone)}</td>
-                <td class="actions no-print">
-                  <button class="btn-icon" title="Sửa" aria-label="Sửa ${esc(r.full_name)}"
-                    onclick="openMemberForm(${r.resident_id})">✎</button>
-                </td>
-              </tr>`;
-          }).join("") : `
-            <tr><td colspan="9" class="empty-state">${DB.residents.length
-              ? "Không có cư dân phù hợp. Thử từ khóa khác hoặc chọn “Tất cả”."
-              : "Chưa có dữ liệu. Vào “Import dữ liệu” để nạp file dân cư."}</td></tr>`}
-        </tbody>
-      </table>
-    </div>
-  `;
+  if (!memberTable) {
+    memberTable = UIKit.createTable({
+      columns: [
+        { key: "number", label: "#", render: value => value },
+        { key: "resident", label: "Họ và tên", render: (value, row) => memberNameCell(row.resident) },
+        { key: "gender", label: "Giới tính", render: (value, row) => row.resident.gender },
+        { key: "dob", label: "Ngày sinh", render: (value, row) => dobText(row.resident) },
+        { key: "age", label: "Tuổi", render: (value, row) => UIKit.createBadge({
+          text: ageOf(row.resident) ?? "—",
+          variant: ({ "Trẻ em": "warning", "Học sinh / Sinh viên": "info", "Đang đi làm": "success", "Nghỉ hưu": "info" })[ageGroupOf(row.resident)]
+        }) },
+        { key: "household", label: "Hộ gia đình", render: (value, row) => householdAddress(row.resident.household_id) },
+        { key: "relation", label: "Quan hệ", render: (value, row) => row.resident.relation },
+        { key: "phone", label: "Điện thoại", render: (value, row) => row.resident.phone },
+        { key: "actions", label: "", render: (value, row) => {
+          const button = UIKit.createButton({
+            text: "Sửa",
+            variant: "outline",
+            size: "sm",
+            title: "Sửa",
+            ariaLabel: `Sửa ${row.resident.full_name}`,
+            onClick: () => openMemberForm(row.resident.resident_id)
+          });
+          button.classList.add("no-print");
+          return button;
+        } }
+      ],
+      data: [],
+      pageSize: 50,
+      search: false,
+      emptyText: "Không có cư dân phù hợp. Thử từ khóa khác hoặc chọn “Tất cả”.",
+      translate: memberTableText
+    });
+    memberTable.element.classList.add("table-wrap");
+    memberTable.element.querySelector(".ukit-table")?.classList.add("member-table");
+  }
+
+  memberTable.setEmptyText(DB.residents.length
+    ? "Không có cư dân phù hợp. Thử từ khóa khác hoặc chọn “Tất cả”."
+    : "Chưa có dữ liệu. Vào “Import dữ liệu” để nạp file dân cư.");
+  memberTable.setData(rows.map((resident, index) => ({
+    number: index + 1,
+    resident,
+    gender: resident.gender,
+    dob: dobText(resident),
+    age: ageOf(resident),
+    household: householdAddress(resident.household_id),
+    relation: resident.relation,
+    phone: resident.phone
+  })));
+
+  const memberRows = document.getElementById("member-rows");
+  memberRows.replaceChildren(memberTable.element);
+}
+
+function memberNameCell(resident) {
+  const cell = document.createElement("div");
+  const name = document.createElement("strong");
+  name.textContent = resident.full_name;
+  cell.append(name);
+
+  if (Number(resident.is_voter)) {
+    cell.append(UIKit.createBadge({ text: "Cử tri", variant: "info" }));
+  }
+  if (!isLiving(resident)) {
+    cell.append(UIKit.createBadge({ text: resident.status, variant: "warning" }));
+  }
+  if (resident.check_note) {
+    const checkButton = UIKit.createButton({
+      text: `Cần kiểm tra (${checkItems(resident).length})`,
+      variant: "secondary",
+      size: "sm",
+      onClick: () => openCheckModal(resident.resident_id)
+    });
+    checkButton.classList.add("no-print");
+    cell.append(checkButton);
+    if (memFilters.check) {
+      const summary = document.createElement("div");
+      summary.className = "check-summary no-print";
+      summary.textContent = checkItems(resident).map(item => explainCheck(item, resident).title).join(" · ");
+      cell.append(summary);
+    }
+  }
+
+  return cell;
+}
+
+function memberTableText(key, values = {}) {
+  const messages = {
+    "table.pageSize": "Hiển thị",
+    "table.previousPage": "Trang trước",
+    "table.page": "Trang {page}",
+    "table.nextPage": "Trang tiếp theo",
+    "table.showingRows": "Hiển thị {first}–{last} trong tổng số {total} người",
+    "table.noData": "Không có dữ liệu phù hợp"
+  };
+  return (messages[key] || key).replace(/\{(\w+)\}/g, (match, name) => values[name] ?? match);
 }
 
 /* The search works on top of the selected quick list. */

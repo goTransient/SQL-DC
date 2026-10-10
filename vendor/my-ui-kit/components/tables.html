@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="page.title.tables">Tables — My UI Kit</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+</head>
+<body>
+  <div class="ui-main-shell" style="margin-left:0">
+    <header class="ui-topbar">    <a class="ui-button ui-button-outline ui-button-sm" href="../index.html" data-i18n="back.library">← Thư viện</a><strong class="ui-topbar-title">Tables</strong></header>
+    <main class="ui-content">
+      <div class="ui-page-heading">
+        <div>
+          <div class="ui-breadcrumb" data-i18n="breadcrumb.tables">Thành phần / Tables</div>
+          <h1 data-i18n="page.table.title">Bảng dữ liệu</h1>
+          <p class="ui-muted" data-i18n="page.table.description">Bảng cơ bản có trạng thái và vùng thao tác.</p>
+        </div>
+      </div>
+      <section class="ui-panel">
+        <header class="ui-panel-header">
+          <div>
+            <h2 data-i18n="page.table.heading">Danh sách học phần</h2>
+            <p data-i18n="page.table.staticDescription">Ví dụ dữ liệu tĩnh để tham khảo giao diện.</p>
+          </div>
+          <button class="ui-button ui-button-primary" data-i18n="page.table.add">+ Thêm học phần</button>
+        </header>
+        <div class="ui-panel-body">
+          <div class="ui-toolbar">
+            <input class="ui-input ui-search" placeholder="Tìm học phần..." data-i18n-placeholder="page.table.search">
+            <select class="ui-select" style="width:auto">
+              <option value="" data-i18n="page.status.all">Tất cả trạng thái</option>
+              <option value="Đang hoạt động" data-i18n="page.status.active">Đang hoạt động</option>
+              <option value="Bản nháp" data-i18n="page.status.draft">Bản nháp</option>
+            </select>
+          </div>
+        </div>
+        <div class="ui-table-wrap">
+          <table class="ui-table" data-pagination>
+            <thead>
+              <tr>
+                <th data-i18n="page.table.code">Mã</th>
+                <th data-i18n="page.list.name">Học phần</th>
+                <th data-i18n="page.table.exams">Số bài thi</th>
+                <th data-i18n="page.status.title">Trạng thái</th>
+                <th data-i18n="page.actions">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>KCOTO</td>
+                <td>
+                  <span class="ui-table-name">Kết cấu ô tô</span>
+                  <span class="ui-table-sub">Cập nhật 09/10/2026</span>
+                </td>
+                <td>12</td>
+                <td><span class="ui-badge ui-badge-success">Đang hoạt động</span></td>
+                <td>
+                  <div class="ui-table-actions">
+                    <button class="ui-button ui-button-outline ui-button-sm" data-i18n="button.edit">Sửa</button>
+                    <button class="ui-button ui-button-outline ui-button-sm" data-i18n="button.view">Xem</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>HTDL</td>
+                <td>
+                  <span class="ui-table-name">Hệ thống điện</span>
+                  <span class="ui-table-sub">Cập nhật 08/10/2026</span>
+                </td>
+                <td>08</td>
+                <td><span class="ui-badge ui-badge-warning">Bản nháp</span></td>
+                <td>
+                  <div class="ui-table-actions">
+                    <button class="ui-button ui-button-outline ui-button-sm" data-i18n="button.edit">Sửa</button>
+                    <button class="ui-button ui-button-outline ui-button-sm" data-i18n="button.view">Xem</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>ĐCĐT</td>
+                <td>
+                  <span class="ui-table-name">Động cơ đốt trong</span>
+                  <span class="ui-table-sub">Cập nhật 06/10/2026</span>
+                </td>
+                <td>16</td>
+                <td><span class="ui-badge ui-badge-info">Đang kiểm tra</span></td>
+                <td>
+                  <div class="ui-table-actions">
+                    <button class="ui-button ui-button-outline ui-button-sm" data-i18n="button.edit">Sửa</button>
+                    <button class="ui-button ui-button-outline ui-button-sm" data-i18n="button.view">Xem</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <footer class="ui-pagination">
+          <span></span>
+          <div class="ui-page-numbers"></div>
+        </footer>
+      </section>
+    </main>
+  </div>
+  <script src="../js/i18n.js"></script>
+  <script src="../js/ui.js"></script>
+</body>
+</html>

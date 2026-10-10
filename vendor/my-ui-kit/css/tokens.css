@@ -1,0 +1,24 @@
+:root {
+  color-scheme:light;
+  --ui-ink:#14213d;
+  --ui-ink-soft:#232f52;
+  --ui-paper:#faf7f0;
+  --ui-white:#fff;
+  --ui-accent:#e8a33d;
+  --ui-accent-deep:#c6812b;
+  --ui-border:#ded8c8;
+  --ui-border-soft:#eee9df;
+  --ui-muted:#737b8c;
+  --ui-green:#27836d;
+  --ui-green-bg:#e6f4ee;
+  --ui-red:#b84242;
+  --ui-red-bg:#faeaea;
+  --ui-blue:#356cb4;
+  --ui-blue-bg:#eaf1fb;
+  --ui-radius:8px;
+  --ui-radius-sm:5px;
+  --ui-sidebar-width:248px;
+  --ui-topbar-height:64px;
+  --ui-font:Arial,Helvetica,sans-serif;
+  --ui-shadow:0 5px 18px rgba(20,33,61,.06)
+}

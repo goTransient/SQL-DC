@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="page.title.buttons">Buttons — My UI Kit</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+</head>
+<body>
+  <div class="ui-main-shell" style="margin-left:0">
+    <header class="ui-topbar">
+      <a class="ui-button ui-button-outline ui-button-sm" href="../index.html" data-i18n="back.library">← Thư viện</a>
+      <strong class="ui-topbar-title">Buttons</strong>
+    </header>
+    <main class="ui-content">
+      <div class="ui-page-heading">
+        <div>
+          <div class="ui-breadcrumb" data-i18n="breadcrumb.buttons">Thành phần / Buttons</div>
+          <h1>Buttons</h1>
+          <p class="ui-muted" data-i18n="page.buttons.title">Các biến thể nút, kích thước và trạng thái.</p>
+        </div>
+      </div>
+      <section class="ui-panel">
+        <header class="ui-panel-header">
+          <h2 data-i18n="page.buttons.variants">Variants</h2>
+        </header>
+        <div class="ui-panel-body" style="display:flex;flex-wrap:wrap;gap:10px">
+          <button class="ui-button ui-button-primary" type="button">Primary</button>
+          <button class="ui-button ui-button-accent" type="button">Accent</button>
+          <button class="ui-button ui-button-outline" type="button">Outline</button>
+          <button class="ui-button ui-button-danger" type="button">Danger</button>
+          <button class="ui-button ui-button-primary" type="button" disabled>Disabled</button>
+        </div>
+      </section>
+      <section class="ui-panel ui-mt-24">
+        <header class="ui-panel-header">
+          <h2 data-i18n="page.buttons.sizes">Sizes</h2>
+        </header>
+        <div class="ui-panel-body" style="display:flex;align-items:center;flex-wrap:wrap;gap:10px">
+          <button class="ui-button ui-button-primary ui-button-sm" type="button">Small</button>
+          <button class="ui-button ui-button-primary" type="button">Default</button>
+        </div>
+      </section>
+      <section class="ui-panel ui-mt-24">
+        <header class="ui-panel-header">
+          <h2 data-i18n="page.buttons.example">HTML mẫu</h2>
+          <button
+            class="ui-button ui-button-outline ui-button-sm"
+            type="button"
+            data-copy-text="&lt;button class=&quot;ui-button ui-button-primary&quot;&gt;Lưu thay đổi&lt;/button&gt;"
+            data-i18n="page.buttons.copy"
+          >Sao chép</button>
+        </header>
+        <div class="ui-panel-body">
+          <code class="ui-code">&lt;button class="ui-button ui-button-primary"&gt;Lưu thay đổi&lt;/button&gt;</code>
+          <p id="copyStatus" class="ui-help" aria-live="polite"></p>
+        </div>
+      </section>
+      <section class="ui-panel ui-mt-24">
+        <header class="ui-panel-header">
+          <h2 data-i18n="page.buttons.api">JavaScript API</h2>
+          <p data-i18n="page.buttons.apiDescription">Tạo nút mà không cần viết lại markup.</p>
+        </header>
+        <div class="ui-panel-body">
+          <a class="ui-button ui-button-outline" href="api-demo.html"><span data-i18n="page.buttons.openApi">Mở UIKit API demo</span> →</a>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="../js/i18n.js"></script>
+  <script src="../js/ui.js"></script>
+</body>
+</html>

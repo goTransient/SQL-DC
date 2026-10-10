@@ -20,14 +20,6 @@ const STATUS_OPTIONS = ["Đang ở", "Tạm vắng", "Đã chuyển đi", "Đã 
 
 const AGE_GROUPS = ["Trẻ em", "Học sinh / Sinh viên", "Đang đi làm", "Nghỉ hưu", "Thiếu thông tin"];
 
-const ageGroupColors = {
-  "Trẻ em": "age-child",
-  "Học sinh / Sinh viên": "age-student",
-  "Đang đi làm": "age-working",
-  "Nghỉ hưu": "age-retired",
-  "Thiếu thông tin": "age-unknown"
-};
-
 /* ---------- Server ---------- */
 
 /*

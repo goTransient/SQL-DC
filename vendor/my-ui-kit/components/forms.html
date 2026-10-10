@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="page.title.forms">Forms — My UI Kit</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+</head>
+<body>
+  <div class="ui-main-shell" style="margin-left:0">
+    <header class="ui-topbar">
+      <a class="ui-button ui-button-outline ui-button-sm" href="../index.html" data-i18n="back.library">← Thư viện</a>
+      <strong class="ui-topbar-title">Forms</strong>
+    </header>
+    <main class="ui-content">
+      <div class="ui-page-heading">
+        <div>
+          <div class="ui-breadcrumb" data-i18n="breadcrumb.forms">Thành phần / Forms</div>
+          <h1>Form controls</h1>
+          <p class="ui-muted" data-i18n="page.forms.title">Các trường nhập liệu có label và trạng thái dễ tùy chỉnh.</p>
+        </div>
+      </div>
+      <section class="ui-panel">
+        <header class="ui-panel-header">
+          <h2 data-i18n="page.forms.sample">Biểu mẫu mẫu</h2>
+        </header>
+        <div class="ui-panel-body">
+          <form data-demo-form>
+            <div class="ui-form-grid">
+              <label class="ui-field">
+                <span class="ui-label"><span data-i18n="page.forms.courseName">Tên học phần</span> <span class="ui-required">*</span></span>
+                <input class="ui-input" type="text" name="courseName" required placeholder="Nhập tên học phần" data-i18n-placeholder="page.forms.courseNamePlaceholder">
+              </label>
+              <label class="ui-field">
+                <span class="ui-label" data-i18n="page.forms.courseCode">Mã học phần</span>
+                <input class="ui-input" type="text" name="courseCode" placeholder="VD: KCOTO">
+              </label>
+              <label class="ui-field">
+                <span class="ui-label" data-i18n="page.forms.category">Danh mục</span>
+                <select class="ui-select" name="category">
+                  <option value="" data-i18n="page.forms.chooseCategory">Chọn danh mục</option>
+                  <option value="quiz" data-i18n="page.forms.quiz">Kiểm tra</option>
+                  <option value="final" data-i18n="page.forms.final">Thi kết thúc học phần</option>
+                </select>
+              </label>
+              <label class="ui-field">
+                <span class="ui-label" data-i18n="page.forms.startDate">Ngày áp dụng</span>
+                <input class="ui-input" type="date" name="startDate">
+              </label>
+              <label class="ui-field ui-field-full">
+                <span class="ui-label" data-i18n="page.forms.description">Mô tả</span>
+                <textarea class="ui-textarea" name="description" placeholder="Nhập mô tả..." data-i18n-placeholder="page.forms.descriptionPlaceholder"></textarea>
+                <span class="ui-help" data-i18n="page.forms.optional">Thông tin bổ sung không bắt buộc.</span>
+              </label>
+              <label class="ui-check-row ui-field-full">
+                <input type="checkbox" name="active" value="1">
+                <span data-i18n="page.forms.activate">Kích hoạt học phần</span>
+              </label>
+            </div>
+            <div class="ui-form-actions">
+              <button type="reset" class="ui-button ui-button-outline" data-i18n="button.reset">Làm lại</button>
+              <button type="submit" class="ui-button ui-button-primary" data-i18n="button.save">Lưu thông tin</button>
+            </div>
+            <p class="ui-help" data-form-status aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="../js/i18n.js"></script>
+  <script src="../js/ui.js"></script>
+</body>
+</html>
