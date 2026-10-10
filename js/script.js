@@ -147,7 +147,7 @@ function showLogin(message = "") {
       <section class="auth-page">
         <div class="auth-card">
           <h2>Sổ Quản Lý Dân Cư</h2>
-          <p>Đăng nhập bằng tài khoản Google đã được cấp quyền để tiếp tục.</p>
+          <p>Đăng nhập bằng tài khoản Google để tiếp tục.</p>
           ${message ? `<div class="form-error" role="alert">${esc(message)}</div>` : ""}
           <a class="btn-primary auth-login" href="api/google-login.php">Đăng nhập bằng Google</a>
         </div>
